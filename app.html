@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="bXuUday8bYLGXxXuKpTEX8">
+<head data-page-node-id="vSENBS5hKpTD1vVyADMMux">
+<meta charset="UTF-8" data-page-node-id="lGEB9F00PE3SCBEhqsmTNh">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" data-page-node-id="CmdjozA7e3Q4aN2xfo1zDO">
+<title>新水木馆 · 学生端</title>
+<style>
+  :root {
+    --paper: #FAF7F2; --ink: #3A352E; --green: #1F5C4D; --rust: #A6462E;
+    --blue: #2E6EA6; --gold: #C9A227; --line: #D8D2C4;
+    --card: #FFFFFF; --dim: #8A8378;
+    --wood1: #D9B48A; --wood2: #E4CFA8; --wood3: #C8956C;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { scrollbar-width:none; }
+  html::-webkit-scrollbar { display:none; }
+  html,body { height:100%; }
+  body {
+    font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    background:var(--paper); color:var(--ink);
+    display:flex; justify-content:center;
+  }
+  #phone {
+    width:100%; max-width:420px; height:100vh; display:flex; flex-direction:column;
+    background:var(--paper); position:relative; overflow:hidden;
+  }
+  /* 顶栏 */
+  #topbar {
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; border-bottom:1px solid var(--line);
+    background:var(--paper); z-index:10;
+  }
+  #topbar .brand { display:flex; align-items:center; gap:8px; }
+  #topbar .logo {
+    width:26px; height:26px; border-radius:6px; background:var(--green);
+    color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center;
+  }
+  #topbar .t1 { font-size:15px; font-weight:700; }
+  #topbar .t2 { font-size:10px; color:var(--dim); margin-top:1px; }
+  #langBtn {
+    border:1px solid var(--green); color:var(--green); background:transparent;
+    border-radius:14px; padding:4px 12px; font-size:12px; cursor:pointer;
+  }
+  /* 内容区 */
+  #pages { flex:1 1 auto; overflow-y:auto; overflow-x:hidden; position:relative; }
+  .page { display:none; padding:16px; padding-bottom:32px; animation:fadeIn .25s ease; }
+  .page.active { display:block; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* 通用卡片 */
+  .card {
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(58,53,46,.05);
+  }
+  .sec-title { font-size:13px; font-weight:700; color:var(--green); margin-bottom:10px; letter-spacing:.5px; }
+  .dim { color:var(--dim); font-size:12px; }
+  .btn {
+    display:block; width:100%; border:none; border-radius:12px; padding:13px;
+    font-size:15px; font-weight:700; cursor:pointer; margin-top:14px;
+    background:var(--green); color:#fff; transition:opacity .15s;
+  }
+  .btn:active { opacity:.85; }
+  .btn.ghost { background:transparent; color:var(--green); border:1.5px solid var(--green); }
+  .btn.rust { background:var(--rust); }
+  .btn:disabled { background:var(--line); color:#fff; cursor:not-allowed; }
+
+  /* 底部页签 */
+  #tabs {
+    flex:0 0 auto; display:flex; background:#fff; border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom); z-index:10;
+  }
+  .tab { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:8px 0 6px; cursor:pointer; color:var(--dim); font-size:10px; white-space:nowrap; overflow:hidden; }
+  .tab svg { width:22px; height:22px; }
+  .tab.active { color:var(--green); font-weight:700; }
+  .tab.active svg { stroke:var(--green); }
+
+  /* 蒙层弹窗 */
+  #overlay {
+    position:absolute; inset:0; background:rgba(58,53,46,.45); z-index:50;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #overlay.show { display:flex; }
+  #modal {
+    background:#fff; border-radius:18px; width:100%; max-width:340px;
+    padding:20px; position:relative; animation:pop .25s ease;
+  }
+  @keyframes pop { from{transform:scale(.92); opacity:0;} to{transform:scale(1); opacity:1;} }
+
+  /* 调舱动画蒙层（全屏） */
+  #anime {
+    position:absolute; inset:0; background:var(--paper); z-index:60; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+  }
+  #anime.show { display:flex; }
+
+  /* toast */
+  #toast {
+    position:absolute; left:50%; bottom:90px; transform:translateX(-50%);
+    background:rgba(58,53,46,.92); color:#fff; border-radius:20px; padding:9px 18px;
+    font-size:13px; z-index:80; opacity:0; transition:opacity .3s; pointer-events:none;
+    white-space:nowrap;
+  }
+  #toast.show { opacity:1; }
+
+  /* ===== 页1 楼体网格 ===== */
+  .tower-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tower {
+    display:flex; flex-direction:column-reverse; gap:3px; min-width:max-content;
+    padding:2px; margin:0 auto;
+  }
+  .trow { display:flex; align-items:center; gap:3px; }
+  .trow .fl { width:26px; font-size:9px; color:var(--dim); text-align:right; padding-right:4px; flex:0 0 auto; }
+  .cell {
+    width:11px; height:14px; border-radius:2.5px; flex:0 0 auto;
+    background:var(--wood2); border:1px solid rgba(58,53,46,.14);
+  }
+  .cell.s { background:var(--wood3); }
+  .cell.func { background:transparent; border:1.5px dashed var(--green); }
+  .cell.mine { background:var(--green); border:1.5px solid #0F3A2E; box-shadow:0 0 0 2px rgba(31,92,77,.3); }
+  .cell.mine::after { content:""; }
+
+  /* 舱位信息 */
+  .cap-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .cap-item { background:var(--paper); border-radius:10px; padding:10px 12px; }
+  .cap-item .k { font-size:11px; color:var(--dim); margin-bottom:3px; }
+  .cap-item .v { font-size:15px; font-weight:700; }
+
+  /* 搬家意向选项 */
+  .prefs { display:flex; flex-direction:column; gap:10px; }
+  .pref {
+    display:flex; align-items:center; gap:12px; padding:14px;
+    border:1.5px solid var(--line); border-radius:12px; cursor:pointer; background:#fff;
+  }
+  .pref.sel { border-color:var(--green); background:#F0F5F1; }
+  .pref .ic { font-size:24px; }
+  .pref .nm { font-size:14px; font-weight:700; }
+  .pref .ds { font-size:11px; color:var(--dim); margin-top:2px; }
+
+  /* ===== 页2 投票 ===== */
+  .vote-head { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .vote-head .heat { font-size:11px; color:var(--rust); }
+  .fl-pick { display:flex; flex-direction:column; gap:8px; }
+  .fl-row { display:flex; align-items:center; gap:8px; }
+  .fl-row .fno { width:34px; font-size:12px; font-weight:700; flex:0 0 auto; }
+  .fl-row .fno.lock { color:var(--gold); }
+  .chips { display:flex; gap:6px; flex:1; }
+  .chip {
+    flex:1; text-align:center; font-size:11px; padding:7px 0; border-radius:8px;
+    border:1.5px solid var(--line); color:var(--dim); cursor:pointer; background:#fff;
+    user-select:none;
+  }
+  .chip.on.gym  { background:#D5E5D0; border-color:#1F5C4D; color:#1F5C4D; font-weight:700; }
+  .chip.on.lib  { background:#DCE8DC; border-color:#2E6EA6; color:#2E6EA6; font-weight:700; }
+  .chip.on.reh  { background:#E5D4C0; border-color:#A6462E; color:#A6462E; font-weight:700; }
+  .chip:disabled { opacity:.35; cursor:not-allowed; }
+  .quota-bar { display:flex; gap:8px; margin:6px 0 2px; }
+  .q-item { flex:1; background:var(--paper); border-radius:10px; padding:8px; text-align:center; }
+  .q-item .qn { font-size:11px; color:var(--dim); }
+  .q-item .qv { font-size:16px; font-weight:700; margin-top:2px; }
+  .q-item.ok .qv { color:var(--green); }
+  .q-item.over .qv { color:var(--rust); }
+
+  /* 票况横条 */
+  .poll { display:flex; flex-direction:column; gap:7px; }
+  .poll-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .poll-row .pl { width:78px; color:var(--dim); flex:0 0 auto; }
+  .poll-bar { flex:1; height:18px; background:var(--paper); border-radius:9px; overflow:hidden; }
+  .poll-fill { height:100%; border-radius:9px; animation:grow .8s ease; }
+  @keyframes grow { from{width:0!important;} }
+  .poll-row .pv { width:44px; text-align:right; font-weight:700; flex:0 0 auto; }
+
+  /* ===== 页3 召唤 ===== */
+  .types { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .ty {
+    border:1.5px solid var(--line); border-radius:12px; padding:10px 4px; text-align:center;
+    cursor:pointer; background:#fff;
+  }
+  .ty.sel { border-color:var(--green); background:#F0F5F1; }
+  .ty .ti { font-size:22px; }
+  .ty .tn { font-size:11px; margin-top:4px; font-weight:600; }
+  .sess-group { margin-bottom:10px; }
+  .sess-label { font-size:12px; font-weight:700; margin-bottom:6px; }
+  .sess { display:flex; gap:8px; }
+  .se {
+    flex:1; text-align:center; padding:10px 0; border:1.5px solid var(--line);
+    border-radius:10px; font-size:13px; cursor:pointer; background:#fff; position:relative;
+  }
+  .se.sel { border-color:var(--green); background:#F0F5F1; font-weight:700; color:var(--green); }
+  .se .hot { position:absolute; top:-7px; right:-4px; background:var(--rust); color:#fff;
+    font-size:8px; border-radius:8px; padding:1px 5px; }
+  .pts-row { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; }
+  .cost-card { background:#F0F5F1; border-radius:10px; padding:10px 14px; }
+  .cost-card .big { font-size:20px; font-weight:800; color:var(--green); }
+
+  /* 动画步骤 */
+  #anime .steps { display:flex; flex-direction:column; gap:14px; width:82%; max-width:300px; }
+  .step { display:flex; align-items:center; gap:12px; opacity:.25; transition:opacity .3s; }
+  .step.on { opacity:1; }
+  .step .dot { width:30px; height:30px; border-radius:50%; background:var(--paper);
+    border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:14px; flex:0 0 auto; }
+  .step.on .dot { background:var(--green); }
+  .step.on .dot span { color:#fff; }
+  .step .st { font-size:13px; font-weight:600; }
+  #anime .title { font-size:15px; font-weight:800; color:var(--green); margin-bottom:26px; }
+  .gantry-svg { width:82%; max-width:300px; margin:18px 0 8px; }
+
+  /* 成功页 */
+  .done-ic { font-size:44px; text-align:center; margin:6px 0 10px; }
+  .done-t { font-size:17px; font-weight:800; text-align:center; color:var(--green); }
+  .done-s { font-size:12px; color:var(--dim); text-align:center; margin-top:4px; }
+  .qr-mock { width:110px; height:110px; margin:16px auto 4px; border:1.5px dashed var(--green);
+    border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--green); font-size:11px; }
+
+  /* ===== 页4 看板 ===== */
+  .heat-tbl { display:grid; grid-template-columns:30px repeat(6,1fr); gap:3px; align-items:center; }
+  .heat-tbl .hl { font-size:9px; color:var(--dim); text-align:right; padding-right:3px; }
+  .heat-cell { height:14px; border-radius:3px; background:var(--paper); }
+  .heat-x { font-size:8px; color:var(--dim); text-align:center; margin-top:2px; }
+  .rank-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); }
+  .rank-row:last-child { border:none; }
+  .rank-no { width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff;
+    font-size:11px; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .rank-no.n2 { background:var(--blue); } .rank-no.n3 { background:var(--gold); }
+  .rank-name { font-size:13px; font-weight:600; flex:1; }
+  .rank-val { font-size:12px; color:var(--dim); }
+  .stat-row { display:flex; gap:10px; }
+  .stat-card { flex:1; background:var(--paper); border-radius:12px; padding:14px; text-align:center; }
+  .stat-card .n { font-size:24px; font-weight:800; color:var(--green); }
+  .stat-card .l { font-size:11px; color:var(--dim); margin-top:3px; }
+</style>
+</head>
+<body data-page-node-id="fYT33iTKFCGrt3qDXHfKTU">
+<div id="phone" data-page-node-id="Ymq00K3LaXZosWoECTrNPP">
+
+  <!-- 顶栏 -->
+  <div id="topbar" data-page-node-id="HmsXkRWJf0jrFNZkXjfg1G">
+    <div class="brand" data-page-node-id="2P8G4H7DZz5lACNK4TJIPn">
+      <div class="logo" data-page-node-id="NfoVYEMt3LjrKmXTmIE8jA">水</div>
+      <div data-page-node-id="jFeKCCxYacGiWSzFxpTFHW">
+        <div class="t1" data-page-node-id="imriLakVRlwGCOCNB8xNBG">新水木馆</div>
+        <div class="t2" id="subTitle" data-page-node-id="acmZepBPUNa9ejm9b4JD1H">插接书院 · 学生端</div>
+      </div>
+    </div>
+    <button id="langBtn" data-page-node-id="H6jRkLmJODwct78rZR8u0v">EN</button>
+  </div>
+
+  <!-- 内容 -->
+  <div id="pages" data-page-node-id="6ZeDEHxQBMJpS6WN9aCkxd">
+
+    <!-- 页1 我的舱位 -->
+    <div class="page" id="page-home" data-page-node-id="EQZNONqXDgQ5SPfuq2aTsQ">
+      <div class="card" data-page-node-id="iCXJLjypFAkHoNdMW7Kbbw">
+        <div class="sec-title" data-i18n="myCap" data-page-node-id="8EuOXv7cFEEVxIpcodRzk5">我的舱位</div>
+        <div class="cap-grid" data-page-node-id="zqdGDFNvoDTxuye3P1YabQ">
+          <div class="cap-item" data-page-node-id="HHVs84X6TWcY96ehlQlEcl"><div class="k" data-i18n="capId" data-page-node-id="ZOEkn0G8fgMTqHWmM9dAXT">舱位号</div><div class="v" id="myCapId" data-page-node-id="6t6wV5W4CrU4ypaWiqF4h7">F07-N12</div></div>
+          <div class="cap-item" data-page-node-id="EMy9tyHEWcGJDEjwkwxPsN"><div class="k" data-i18n="facing" data-page-node-id="gDRuKCU6t7wJNNGOG1nW8G">朝向</div><div class="v" id="myFacing" data-page-node-id="ZoBe3H3rByCeAn47AFgRVH">北 · 看中庭</div></div>
+          <div class="cap-item" data-page-node-id="Is7ZaTRgLQSAH5nvLEMsls"><div class="k" data-i18n="neighbors" data-page-node-id="hHt4SmcDN9yvCVpzqgbNQa">邻居</div><div class="v" data-page-node-id="U8QJJnvyILVwr0TiZp6UFx">N11 · N13</div></div>
+          <div class="cap-item" data-page-node-id="zNbaOGZubl3rEo1izLarT8"><div class="k" data-page-node-id="s5koca62GZxshjd8Sodw58">积分</div><div class="v" id="myPts" data-page-node-id="AnwFY1CNkoIUw95c0L7RZr">100</div></div>
+        </div>
+      </div>
+      <div class="card" data-page-node-id="7gZmzKiM7B8wpDrdE2NhjA">
+        <div class="sec-title" data-i18n="tower" data-page-node-id="mdflArrI32TEflGJmTzqRB">楼体示意</div>
+        <div class="tower-wrap" data-page-node-id="rPAh5dQ0pGgEBG9EOAQn9Q"><div class="tower" id="towerGrid" data-page-node-id="pjpxMpHihMgRHgSt4NZKHZ"></div></div>
+        <div class="dim" style="margin-top:8px; font-size:10px;" data-page-node-id="yj2izRH4fKClIqbn8TwAAI">🟩 我的舱 · 深色=阳面 · 虚线框=功能舱空位</div>
+      </div>
+      <button class="btn" id="hallBtn" style="margin:0 0 24px;" data-page-node-id="hAybEXe8cBFMvf5hTWGG6y">进入换舱大厅</button>
+    </div>
+
+    <!-- 页2 学期投票 -->
+    <div class="page" id="page-vote" data-page-node-id="R3hIBub1fTbGOm9iMVLrDn">
+      <div class="card" data-page-node-id="lqWutO4aI8gjLU5dFFx7QV">
+        <div class="vote-head" data-page-node-id="bCpvU2hJy9whpZJto921F6">
+          <div class="sec-title" style="margin:0;" data-i18n="voteTitle" data-page-node-id="PYvVkhJ7xTQUZuNfTmbzRB">学期投票</div>
+          <div class="heat" data-page-node-id="osL8cZO5bg8aoXyUpcLQ7R">🔥 <span data-i18n="heatHint" data-page-node-id="a4ACwTBrgMnEQ4zAlGa4wt">投票依据：上学期预约热力数据</span></div>
+        </div>
+        <div class="dim" data-i18n="voteSub" data-page-node-id="CjKPCPW2VnC7ZHhMrnKYaA">下学期 · 大空间功能落位</div>
+        <div class="quota-bar" data-page-node-id="UGMt8jWaPt0iTHS7PQqAjC">
+          <div class="q-item" id="qGym" data-page-node-id="gQEFv1AZysOfaTFFKlHDLj"><div class="qn" data-i18n="quotaGym" data-page-node-id="0QDgdCkAOqczTviQ36c8dx">健身区</div><div class="qv" id="qvGym" data-page-node-id="SMwtNYDgArfI1IMHP3i9ju">0/3</div></div>
+          <div class="q-item" id="qLib" data-page-node-id="ELBiKqSekw7zZaEhM7DFJq"><div class="qn" data-i18n="quotaLib" data-page-node-id="JqXCe4QvnQFA2TCZwHQI4A">小图书馆</div><div class="qv" id="qvLib" data-page-node-id="jpxKHMcP3QLRgQ0b9kKnYH">0/3</div></div>
+          <div class="q-item" id="qReh" data-page-node-id="KHiSOETa8IGNsceA6JRwoY"><div class="qn" data-i18n="quotaReh" data-page-node-id="fHFUuvGftdL7ereGKBQTQH">大排练室</div><div class="qv" id="qvReh" data-page-node-id="k9xxEKLJPvvAr3R8udrGWh">0/2</div></div>
+        </div>
+        <div class="fl-pick" id="flPick" data-page-node-id="02xTMnBFAFXFZe7UMtZH6Z"></div>
+        <button class="btn" id="voteSubmit" disabled style="margin-top:16px;" data-page-node-id="7lewpVH50W4yM18oompqIm">提交投票</button>
+      </div>
+      <div class="card" id="resultCard" style="display:none;" data-page-node-id="JFUVzaUWUwHUOtfWOlLt8A">
+        <div class="sec-title" data-i18n="liveVotes" data-page-node-id="20zZB37uOjZn2vH7xbEhQz">全院实时票况</div>
+        <div class="poll" id="pollBox" data-page-node-id="wO2lcmAiLeKx80fQ4GsP8C"></div>
+        <button class="btn ghost" id="resultBtn" style="margin-top:16px;" data-page-node-id="AaSYNjEjh2xlH1K60X9cbT">查看下学期落位结果</button>
+      </div>
+    </div>
+
+    <!-- 页3 召唤功能舱 -->
+    <div class="page" id="page-summon" data-page-node-id="vRQ6RrqGCrtAAYedc4b0uq">
+      <div class="card" data-page-node-id="lfneafLPQVnMZxk8TYUvyp">
+        <div class="sec-title" data-i18n="pickType" data-page-node-id="KboktE0dfO39VINTFRxn1Q">① 选择舱型</div>
+        <div class="types" id="typeGrid" data-page-node-id="UrOTGvzzB65ul4dJtQgzTy"></div>
+      </div>
+      <div class="card" data-page-node-id="VlvHpITAc712wsQwxYdpD5">
+        <div class="sec-title" data-i18n="pickSlot" data-page-node-id="gGAU70SGjevY24wJjHy6UF">② 选择日期与时段</div>
+        <div class="dim" style="margin-bottom:10px;" data-i18n="perDay" data-page-node-id="967AEOaPzxJ05ReUp1Y3XM">每空位每天 3 场</div>
+        <div class="sess-group" data-page-node-id="lU3oa1r5HrQhTovcdAOVOt">
+          <div class="sess-label" id="dayLbl0" data-page-node-id="sZhb47eVXDTM5oawTtkNsY">今天</div>
+          <div class="sess" id="sess0" data-page-node-id="f6HqftCGT2E7JCG5oV6vOG"></div>
+        </div>
+        <div class="sess-group" data-page-node-id="59s0G5FDZOIz42l2LXG4fC">
+          <div class="sess-label" id="dayLbl1" data-page-node-id="q0zwiZnUzmwLHE4OqmW2sC">明天</div>
+          <div class="sess" id="sess1" data-page-node-id="lGwTJcUV5BNODnpzsR3kZH"></div>
+        </div>
+      </div>
+      <div class="card" data-page-node-id="EMw08RHGpXOIwuh0osVMc1">
+        <div class="sec-title" data-i18n="pick3" data-page-node-id="1ztAnLSQ4IzaNQEZGrDSBA">③ 确认召唤</div>
+        <div class="cost-card" data-page-node-id="8h7vjQ20pvUQEPdEmoToFL">
+          <div class="pts-row" data-page-node-id="ocpOfbCjvN8NGXFmBvGwth"><span data-i18n="yourPoints" data-page-node-id="EJKM6ERrjDn0esQTWgHyx4">空间积分</span><b id="ptsNow" data-page-node-id="jyoFnHjhgbZCNWEWlHMIND">100</b></div>
+          <div class="pts-row" data-page-node-id="ypuDcRl4dN2GfTXivsC2xg"><span data-i18n="freeLeft" data-page-node-id="RMNaSI9IJ2lWwJZrpNg2t6">本月免费次数</span><b id="freeLeft" data-page-node-id="gSp3JZBuyFrLi6lRbEOmr6">2</b></div>
+          <div class="pts-row" data-page-node-id="oEejA0FLY6ZZ0lOEsqusRG"><span data-i18n="costEst" data-page-node-id="S7FuF3Xvt7PEQK3HidN9FG">本次预计扣</span><b class="big" id="costEst" data-page-node-id="uazaSoavp6phiDErEZkgw2">免费</b></div>
+        </div>
+        <button class="btn rust" id="summonBtn" disabled data-page-node-id="Je4EiiF6g0DrOZBk05FuBp">召唤</button>
+      </div>
+    </div>
+
+    <!-- 页4 数据看板 -->
+    <div class="page" id="page-data" data-page-node-id="qsfRWlD0jnSlCPg5R8ahaF">
+      <div class="card" data-page-node-id="b2dKAND52ojKOvo1FCiAGB">
+        <div class="sec-title" data-i18n="heatMap" data-page-node-id="RruMEvsXJbLAnIXkeARPdN">预约热力图</div>
+        <div class="dim" style="margin-bottom:10px;" data-i18n="heatMapSub" data-page-node-id="GNu0aoJPTkZUMcPs9b51Bc">16 层 × 6 时段（上学期）</div>
+        <div class="heat-tbl" id="heatTbl" data-page-node-id="fpEOaYGuHd4CfbzO31qE4b"></div>
+        <div class="dim" style="margin-top:10px; font-size:11px;" data-i18n="peakHint" data-page-node-id="17qi4U9H2rBnlOevJ3BuT7">健身晚间高 · 图书馆午后高 · 排练周末高</div>
+      </div>
+      <div class="card" data-page-node-id="aBLwA0xUo1ju6SitdtsWd2">
+        <div class="sec-title" data-i18n="topTypes" data-page-node-id="iD3E2BPtnsFUj102w1vdjG">热门舱型排行</div>
+        <div id="rankBox" data-page-node-id="JQptaWsNUyHDNAVNSUtkjp"></div>
+      </div>
+      <div class="card" data-page-node-id="BFcPX5vpKNHiikgEGrwdSA">
+        <div class="sec-title" data-i18n="mergeCount" data-page-node-id="1yeWxaI2TACvZ1zTh8DLNF">本月拼舱申请</div>
+        <div class="stat-row" data-page-node-id="IWYaXgtsYiCTuIidolwFRi">
+          <div class="stat-card" data-page-node-id="SNBdUFBnMkUvzgMT0KRCgr"><div class="n" data-page-node-id="N5BUDAXmLbxaHU2RPt5Ogl">23</div><div class="l" data-i18n="mergeCount" data-page-node-id="ff64tA4MDZVaXXd3iBNzXf">本月拼舱申请</div></div>
+          <div class="stat-card" data-page-node-id="BymBlp5ompvLn80zHCNMly"><div class="n" data-page-node-id="b1dMDoZBeL3mvQUpdOqWsL">512</div><div class="l" data-i18n="slots" data-page-node-id="jtqcAcYGY6RBFv0FgpbjrW">空位</div></div>
+        </div>
+        <div class="dim" style="margin-top:12px; text-align:center;" data-i18n="dataNote" data-page-node-id="lu2pEZi2lByzT4Cvv5sGMp">数据驱动下学期投票与库存调整</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 通用弹窗 -->
+  <div id="overlay" data-page-node-id="Gc9zp4LI1nEP6BAkapoUiZ">
+    <div id="modal" data-page-node-id="X3YiRChZvc5mMQe9PLLDXR">
+      <div id="modalBody" data-page-node-id="mWGfA5nnG2D02U9vAyPrD5"></div>
+    </div>
+  </div>
+
+  <!-- 调舱动画层 -->
+  <div id="anime" data-page-node-id="P3HGDYILQQDYidPbTamMGm">
+    <div class="title" id="animeTitle" data-page-node-id="D4DxoUbOwAaOt95ajAIk3G">龙门吊调舱中…</div>
+    <svg class="gantry-svg" viewBox="0 0 300 170" id="gantrySvg" data-page-node-id="0vK6qUG5gOgxLjbOzOW1Cp"></svg>
+    <div class="steps" id="animeSteps" data-page-node-id="RAN81jAm1prmQPMVcArGGt"></div>
+    <button class="btn" id="animeClose" style="display:none; width:82%; max-width:300px; margin-top:26px;" data-page-node-id="kkgZ9Q9bJ34cKjcQCj45pR">关闭</button>
+  </div>
+
+  <div id="toast" data-page-node-id="rGXNOWvb0bIrbfGAvJbAVw"></div>
+
+  <!-- 底部页签 -->
+  <div id="tabs" data-page-node-id="SeZkxYzdFsdKDsvnIjTAbz"></div>
+</div>
+
+<script type="module">
+import { CONFIG, APP } from './building.config.js';
+
+/* ================= 状态 ================= */
+const S = {
+  lang: 'zh',
+  tab: 'home',
+  myCap: { ...APP.me },
+  vote: {},           // {F5:'gym',...}
+  voteDone: false,
+  voteResult: null,   // 种子聚合结果
+  selType: null,      // 舱型 index
+  selDay: 0, selSess: null,
+  usedThisMonth: APP.me.usedThisMonth,
+  points: APP.me.points,
+  lastSummon: null,   // {typeName, day, sess, floor}
+};
+
+/* ================= 工具 ================= */
+// 固定种子伪随机（答辩结果一致）
+function mulberry32(a) {
+  return function() {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rnd = mulberry32(APP.seed);
+const T = k => { const v = APP.S[k]; return v ? (v[S.lang] || v.zh) : k; };
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ================= 页签 ================= */
+const TABS = [
+  { id:'home',   key:'tabHome',   ic:'<path d="M3 11L12 3l9 8"/><path d="M5 10v10h14V10"/>' },
+  { id:'vote',   key:'tabVote',   ic:'<path d="M4 20h16"/><path d="M7 4h6v4l-2 2v6"/><circle cx="9" cy="16" r="2.5"/>' },
+  { id:'summon', key:'tabSummon', ic:'<rect x="6" y="3" width="12" height="8" rx="2"/><path d="M6 14l3 7h6l3-7"/>' },
+  { id:'data',   key:'tabData',   ic:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/>' },
+];
+function buildTabs() {
+  const box = $('tabs'); box.innerHTML = '';
+  TABS.forEach(t => {
+    const d = el('div', 'tab' + (S.tab === t.id ? ' active' : ''),
+      `<svg viewBox="0 0 24 24" fill="none" stroke="${S.tab===t.id?'#1F5C4D':'#8A8378'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.ic}</svg><span>${T(t.key)}</span>`);
+    d.onclick = () => switchTab(t.id);
+    box.appendChild(d);
+  });
+}
+function switchTab(id) {
+  S.tab = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $('page-' + id).classList.add('active');
+  $('pages').scrollTop = 0;
+  buildTabs();
+  location.hash = id;
+}
+
+/* ================= i18n ================= */
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(n => {
+    n.textContent = T(n.dataset.i18n);
+  });
+  $('langBtn').textContent = S.lang === 'zh' ? 'EN' : '中';
+  $('subTitle').textContent = S.lang === 'zh' ? '插接书院 · 学生端' : 'Plug-in College · Student';
+  $('dayLbl0').textContent = S.lang === 'zh' ? APP.days[0] : APP.daysEN[0];
+  $('dayLbl1').textContent = S.lang === 'zh' ? APP.days[1] : APP.daysEN[1];
+  $('hallBtn').textContent = T('hallBtn');
+  $('voteSubmit').textContent = T('voteSubmit');
+  $('summonBtn').textContent = T('summonBtn');
+  $('resultBtn').textContent = T('resultBtn');
+  renderAll();
+}
+$('langBtn').onclick = () => { S.lang = S.lang === 'zh' ? 'en' : 'zh'; applyLang(); };
+
+/* ================= 页1 · 楼体网格 ================= */
+// 舱位名册生成：每层 34 位 = 32 居住 + 1 功能空位（占2位）
+// 奇数层北排 / 偶数层南排；每层错位 1 格
+function buildTower() {
+  const box = $('towerGrid'); box.innerHTML = '';
+  for (let f = 3; f <= 18; f++) {
+    const row = el('div', 'trow');
+    row.appendChild(el('div', 'fl', f + 'F'));
+    const odd = f % 2 === 1;
+    const slotPos = ((f - 3) % 12) + 6; // 每层错位 1 格（演示韵律）
+    for (let i = 1; i <= 17; i++) {
+      const c = el('div', 'cell');
+      if (odd) c.classList.add('s');            // 演示：北深南浅，反之亦然——统一北=深色木
+      // 阳面（S 排）特殊色
+      const isFuncSlot = (odd ? i === slotPos || i === slotPos + 1 : i === slotPos || i === slotPos + 1);
+      if (isFuncSlot) { c.classList.add('func'); c.classList.remove('s'); }
+      if (f === S.myCap.floor && S.myCap.row === 'N' && i === S.myCap.pos) c.classList.add('mine');
+      // 南排第二行复用视觉（每排一行渲染，两排合并显示为一行 17 格，用颜色区分）
+      row.appendChild(c);
+    }
+    box.appendChild(row);
+  }
+}
+
+/* ================= 页1 · 换舱大厅 ================= */
+// 种子化他人换舱需求（固定，保证答辩每次一致）
+const EX_OFFERS = [
+  { id: 1, from: 'F09-S05', fromRow: 'S', wantF: [9, 13], wantPos: [3, 10], wantSunny: false, who: '林同学' },
+  { id: 2, from: 'F04-N08', fromRow: 'N', wantF: [4, 8],  wantPos: [5, 14], wantSunny: true,  who: '王同学' },
+  { id: 3, from: 'F15-S11', fromRow: 'S', wantF: [15, 18], wantPos: [1, 17], wantSunny: false, who: '陈同学' },
+  { id: 4, from: 'F12-N03', fromRow: 'N', wantF: [10, 14], wantPos: [8, 15], wantSunny: true,  who: '赵同学' },
+  { id: 5, from: 'F06-S02', fromRow: 'S', wantF: [3, 6],  wantPos: [10, 17], wantSunny: false, who: '周同学' },
+];
+
+// 换舱大厅状态
+const HALL = {
+  mine: null,        // {floorLo, floorHi, posLo, posHi, wantSunny}
+  published: false,
+  taker: null,       // 同意我需求的 offer
+  matched: null,     // 系统自动匹配结果
+};
+
+$('hallBtn').onclick = openHall;
+
+function openHall() {
+  const body = $('modalBody'); body.innerHTML = '';
+  body.appendChild(el('div', 'sec-title', T('hallTitle')));
+  body.appendChild(el('div', 'dim', T('hallSub') + ' · ' + T('hallFrom')));
+
+  // ---- 我的需求卡 ----
+  const mineCard = el('div', 'cost-card'); mineCard.id = 'hallMineCard';
+  mineCard.style.marginTop = '12px';
+  body.appendChild(mineCard);
+
+  // ---- 发布表单（未发布时显示）----
+  const form = el('div'); form.id = 'hallForm'; form.style.marginTop = '12px';
+  form.appendChild(el('div', 'sec-title', T('hallPublish')));
+
+  // 楼层范围：两个滑块用两行 select 简化（手机友好）
+  const fRow = el('div', 'pts-row'); fRow.innerHTML = `<span>${T('hallFloor')}</span>`;
+  const fSel = document.createElement('select'); fSel.id = 'hallFLo';
+  const fSel2 = document.createElement('select'); fSel2.id = 'hallFHi';
+  for (let f = 3; f <= 18; f++) {
+    fSel.appendChild(new Option(f + 'F', f));
+    fSel2.appendChild(new Option(f + 'F', f));
+  }
+  fSel.value = 3; fSel2.value = 18;
+  const fWrap = el('span', '', '');
+  fWrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  fWrap.appendChild(fSel); fWrap.appendChild(document.createTextNode(T('floorTo'))); fWrap.appendChild(fSel2);
+  fRow.appendChild(fWrap);
+  form.appendChild(fRow);
+
+  // 舱位号范围
+  const pRow = el('div', 'pts-row'); pRow.innerHTML = `<span>${T('hallPos')}</span>`;
+  const pSel = document.createElement('select'); pSel.id = 'hallPLo';
+  const pSel2 = document.createElement('select'); pSel2.id = 'hallPHi';
+  for (let p = 1; p <= 17; p++) {
+    pSel.appendChild(new Option(p, p));
+    pSel2.appendChild(new Option(p, p));
+  }
+  pSel.value = 1; pSel2.value = 17;
+  const pWrap = el('span', '', '');
+  pWrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  pWrap.appendChild(pSel); pWrap.appendChild(document.createTextNode(T('floorTo'))); pWrap.appendChild(pSel2);
+  pRow.appendChild(pWrap);
+  form.appendChild(pRow);
+
+  // 阳面 checkbox
+  const sRow = el('label', 'pts-row');
+  sRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;cursor:pointer;';
+  sRow.innerHTML = `<span>${T('hallWantSunny')}</span>`;
+  const sChk = document.createElement('input'); sChk.type = 'checkbox'; sChk.id = 'hallSunny';
+  sChk.style.cssText = 'width:18px;height:18px;accent-color:#1F5C4D;';
+  sRow.appendChild(sChk);
+  form.appendChild(sRow);
+
+  // 费用提示
+  const fee = el('div', 'dim', `${T('hallFee')} −${APP.exchange.publishCost} ${T('ptCost')}`);
+  fee.style.marginTop = '8px';
+  form.appendChild(fee);
+
+  const pub = el('button', 'btn', T('hallPublish'));
+  pub.onclick = publishRequest;
+  form.appendChild(pub);
+  body.appendChild(form);
+
+  // ---- 他人需求列表 ----
+  body.appendChild(el('div', 'sec-title', T('hallOffers')));
+  const listBox = el('div'); listBox.id = 'hallList'; listBox.style.cssText = 'margin-top:10px;';
+  body.appendChild(listBox);
+  renderOffers();
+
+  $('overlay').classList.add('show');
+  refreshMineCard();
+}
+
+function refreshMineCard() {
+  const c = $('hallMineCard'); if (!c) return;
+  if (!HALL.mine) {
+    c.innerHTML = `<div class="pts-row"><span>${T('hallMine')}</span><b class="dim">${S.lang==='zh'?'未发布':'None'}</b></div>`;
+    return;
+  }
+  const m = HALL.mine;
+  const sunnyTxt = m.wantSunny ? '☀️' : '';
+  c.innerHTML = `<div class="pts-row"><span>${T('hallMine')}</span><b>${m.floorLo}F–${m.floorHi}F · ${m.posLo}–${m.posHi}位 ${sunnyTxt}</b></div>
+    <div class="pts-row"><span>${T('yourPoints')}</span><b>${S.points}</b></div>`;
+}
+
+function publishRequest() {
+  if (HALL.published) return;
+  if (S.points < APP.exchange.publishCost) { showPointsFail(APP.exchange.publishCost); return; }
+  const lo = +$('hallFLo').value, hi = +$('hallFHi').value;
+  const plo = +$('hallPLo').value, phi = +$('hallPHi').value;
+  if (lo > hi || plo > phi) { toast(S.lang==='zh'?'范围起点不能大于终点':'Invalid range'); return; }
+  S.points -= APP.exchange.publishCost;
+  $('myPts').textContent = S.points;
+  HALL.mine = { floorLo: lo, floorHi: hi, posLo: plo, posHi: phi, wantSunny: $('hallSunny').checked };
+  HALL.published = true;
+  HALL.taker = null; HALL.matched = null;
+  refreshMineCard();
+  // 隐藏表单
+  const f = $('hallForm'); if (f) f.style.display = 'none';
+  // 种子化：60% 概率有人应答
+  const hasTaker = rnd() < 0.6;
+  if (hasTaker) {
+    // 从 offers 中找一个与我需求匹配的（他的"要来的位置"≈我现在的位置）
+    HALL.taker = EX_OFFERS[Math.floor(rnd() * EX_OFFERS.length)];
+    setTimeout(() => showTakerAgree(), 1200);
+  } else {
+    setTimeout(() => autoMatch(), 3000);
+  }
+}
+
+// 有人同意交换 → 我方确认
+function showTakerAgree() {
+  const t = HALL.taker; if (!t) return;
+  toast(`${t.who} ${T('hallAgree')} → ${T('hallReward')} +${APP.exchange.agreeReward}`);
+  // 奖励积分（我发起并促成）
+  S.points += APP.exchange.agreeReward;
+  $('myPts').textContent = S.points;
+  confirmSwap(t.from, t);
+}
+
+// 系统自动匹配兜底
+function autoMatch() {
+  if (!HALL.published || HALL.matched) return;
+  const m = HALL.mine;
+  // 在需求范围内取种子位置
+  const nf = m.floorLo + Math.floor(rnd() * (m.floorHi - m.floorLo + 1));
+  const np = m.posLo + Math.floor(rnd() * (m.posHi - m.posLo + 1));
+  const nrow = m.wantSunny ? 'S' : (rnd() < .5 ? 'N' : 'S');
+  const newId = 'F' + String(nf).padStart(2, '0') + '-' + nrow + np;
+  toast(T('hallMatched') + ' · ' + newId);
+  confirmSwap(newId, null);
+}
+
+// 执行交换：调舱动画 + 更新舱位
+function confirmSwap(newId, taker) {
+  const body = $('modalBody');
+  if (taker) {
+    // 在列表中标记该需求已成交
+    const item = $('offer-' + taker.id);
+    if (item) {
+      item.style.borderColor = '#1F5C4D';
+      item.innerHTML = `<div class="rank-row"><div class="rank-no">✓</div><div class="rank-name">${taker.from}</div><div class="rank-val">${T('hallAgreed')} +${APP.exchange.agreeReward}</div></div>`;
+    }
+  }
+  setTimeout(() => {
+    $('overlay').classList.remove('show');
+    playAnime(T('dispatching'), [
+      { ic: '📦', txt: T('stepB1') },
+      { ic: '🛗', txt: T('stepLift') },
+      { ic: '🏗️', txt: T('stepBeam') },
+      { ic: '🔒', txt: T('stepIn') },
+    ], 5200, () => {
+      const parts = newId.match(/F(\d+)-([NS])(\d+)/);
+      const nf = +parts[1], nrow = parts[2], npos = +parts[3];
+      S.myCap = { id: newId, floor: nf, row: nrow, pos: npos };
+      $('myCapId').textContent = newId;
+      $('myFacing').textContent = nrow === 'S' ? T('facingS') : T('facingN');
+      buildTower();
+      HALL.published = false; HALL.mine = null; HALL.taker = null; HALL.matched = null;
+      toast(T('movedTitle') + ' · ' + newId);
+    });
+  }, taker ? 1500 : 600);
+}
+
+function renderOffers() {
+  const box = $('hallList'); if (!box) return;
+  box.innerHTML = '';
+  EX_OFFERS.forEach(o => {
+    const d = el('div', 'pref');
+    d.id = 'offer-' + o.id;
+    d.style.cssText = 'padding:10px 12px;';
+    const range = `${o.wantF[0]}F–${o.wantF[1]}F · ${o.wantPos[0]}–${o.wantPos[1]}位` + (o.wantSunny ? ' ☀️' : '');
+    d.innerHTML = `
+      <div style="flex:1;min-width:0;">
+        <div class="nm">${o.from} <span class="dim" style="font-weight:400;">· ${o.who}</span></div>
+        <div class="ds">${range}</div>
+      </div>`;
+    const btn = el('button', 'btn ghost', T('hallAgree'));
+    btn.style.cssText = 'width:auto;margin:0;padding:7px 12px;font-size:12px;flex:0 0 auto;';
+    btn.onclick = () => agreeToOffer(o);
+    d.appendChild(btn);
+    box.appendChild(d);
+  });
+}
+
+// 我同意别人的需求（他想要我的位置）→ 我得奖励积分
+function agreeToOffer(o) {
+  if (S.points < APP.exchange.publishCost) { showPointsFail(APP.exchange.publishCost); return; }
+  // 同意他人需求：对方想搬到"我现在的位置" → 我搬到他的意向范围
+  const nf = o.wantF[0] + Math.floor(rnd() * (o.wantF[1] - o.wantF[0] + 1));
+  const np = o.wantPos[0] + Math.floor(rnd() * (o.wantPos[1] - o.wantPos[0] + 1));
+  const nrow = o.wantSunny ? 'S' : (rnd() < .5 ? 'N' : 'S');
+  const newId = 'F' + String(nf).padStart(2, '0') + '-' + nrow + np;
+  S.points -= APP.exchange.publishCost;
+  S.points += APP.exchange.agreeReward;
+  $('myPts').textContent = S.points;
+  toast(T('hallAgree') + ' · ' + T('hallReward') + ' +' + APP.exchange.agreeReward);
+  const item = $('offer-' + o.id);
+  if (item) {
+    item.style.borderColor = '#1F5C4D';
+    item.innerHTML = `<div class="rank-row"><div class="rank-no">✓</div><div class="rank-name">${o.from}</div><div class="rank-val">${T('hallAgreed')}</div></div>`;
+  }
+  setTimeout(() => {
+    $('overlay').classList.remove('show');
+    playAnime(T('dispatching'), [
+      { ic: '📦', txt: T('stepB1') },
+      { ic: '🛗', txt: T('stepLift') },
+      { ic: '🏗️', txt: T('stepBeam') },
+      { ic: '🔒', txt: T('stepIn') },
+    ], 5200, () => {
+      S.myCap = { id: newId, floor: nf, row: nrow, pos: np };
+      $('myCapId').textContent = newId;
+      $('myFacing').textContent = nrow === 'S' ? T('facingS') : T('facingN');
+      buildTower();
+      toast(T('movedTitle') + ' · ' + newId);
+    });
+  }, 1200);
+}
+
+/* ================= 页2 · 学期投票 ================= */
+const PROGS = [
+  { id:'gym', zh:'健身区', en:'Gym', color:'#1F5C4D' },
+  { id:'lib', zh:'小图书馆', en:'Lib', color:'#2E6EA6' },
+  { id:'reh', zh:'大排练室', en:'Reh', color:'#A6462E' },
+];
+const QUOTA = { gym: 3, lib: 3, reh: 2 };
+
+function buildVote() {
+  const box = $('flPick'); box.innerHTML = '';
+  for (let f = 3; f <= 18; f++) {
+    const fid = 'F' + f;
+    const isFixed = CONFIG.programFixed.includes(fid);
+    const row = el('div', 'fl-row');
+    row.appendChild(el('div', 'fno' + (isFixed ? ' lock' : ''), f + 'F'));
+    const chips = el('div', 'chips');
+    if (isFixed) {
+      const c = el('div', 'chip', S.lang==='zh' ? '大客厅' : 'Hall');
+      c.style.cssText = 'background:#F3E9D2;border-color:#C9A227;color:#8A6D1E;font-weight:700;';
+      chips.appendChild(c);
+    } else {
+      PROGS.forEach(p => {
+        const c = el('div', 'chip ' + p.id + (S.vote[fid] === p.id ? ' on' : ''),
+          S.lang === 'zh' ? p.zh : p.en);
+        c.onclick = () => {
+          if (S.voteDone) return;
+          if (S.vote[fid] === p.id) delete S.vote[fid];
+          else {
+            // 同层不可重复功能：点选另一功能先清除
+            delete S.vote[fid];
+            S.vote[fid] = p.id;
+          }
+          buildVote(); refreshQuota();
+        };
+        chips.appendChild(c);
+      });
+    }
+    row.appendChild(chips);
+    box.appendChild(row);
+  }
+}
+function refreshQuota() {
+  const cnt = { gym: 0, lib: 0, reh: 0 };
+  Object.values(S.vote).forEach(v => cnt[v]++);
+  const defs = [['gym','qvGym','qGym'], ['lib','qvLib','qLib'], ['reh','qvReh','qReh']];
+  let allOk = true;
+  defs.forEach(([k, vid, cid]) => {
+    const ok = cnt[k] === QUOTA[k];
+    if (!ok) allOk = false;
+    $(vid).textContent = cnt[k] + '/' + QUOTA[k];
+    $(cid).className = 'q-item ' + (cnt[k] > QUOTA[k] ? 'over' : ok ? 'ok' : '');
+  });
+  $('voteSubmit').disabled = !allOk || S.voteDone;
+}
+
+$('voteSubmit').onclick = () => {
+  S.voteDone = true;
+  $('voteSubmit').disabled = true;
+  // 种子化 480 票聚合：以出厂楼层为中心的高斯偏移
+  const tally = { gym: {}, lib: {}, reh: {} };
+  const defaults = { gym: ['F5','F11','F16'], lib: ['F4','F8','F13'], reh: ['F7','F15'] };
+  const candidates = [];
+  for (let f = 3; f <= 18; f++) if (!CONFIG.programFixed.includes('F'+f)) candidates.push('F'+f);
+  PROGS.forEach(p => {
+    candidates.forEach(c => tally[p.id][c] = 0);
+    const myBallot = Object.keys(S.vote).filter(k => S.vote[k] === p.id);
+    myBallot.forEach(b => tally[p.id][b] += 1);
+  });
+  for (let i = 0; i < 480; i++) {
+    PROGS.forEach(p => {
+      const def = defaults[p.id];
+      // 60% 跟随出厂建议 ±1 层，40% 随机
+      const pick = rnd() < .6
+        ? shiftFloor(def[Math.floor(rnd() * def.length)], Math.round((rnd() - .5) * 3))
+        : candidates[Math.floor(rnd() * candidates.length)];
+      if (tally[p.id][pick] != null) tally[p.id][pick]++;
+    });
+  }
+  S.voteResult = tally;
+  renderPoll();
+  $('resultCard').style.display = 'block';
+  $('resultCard').scrollIntoView({ behavior: 'smooth' });
+};
+function shiftFloor(fid, d) {
+  const f = parseInt(fid.slice(1)) + d;
+  const nf = Math.min(18, Math.max(3, f));
+  return 'F' + nf;
+}
+function renderPoll() {
+  if (!S.voteResult) return;
+  const box = $('pollBox'); box.innerHTML = '';
+  PROGS.forEach(p => {
+    // Top3 楼层
+    const top = Object.entries(S.voteResult[p.id]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const max = top[0][1] || 1;
+    top.forEach(([fid, n]) => {
+      const r = el('div', 'poll-row',
+        `<span class="pl">${p.zh} ${fid}</span><div class="poll-bar"><div class="poll-fill" style="width:${(n/max*100).toFixed(0)}%; background:${p.color};"></div></div><span class="pv">${n}${T('votesUnit')}</span>`);
+      box.appendChild(r);
+    });
+  });
+}
+$('resultBtn').onclick = () => {
+  // 结果动画：功能块飞入楼层（简化为提示）
+  toast(S.lang==='zh' ? '结果已公布：下学期落位生效' : 'Result published for next semester');
+};
+
+/* ================= 页3 · 召唤功能舱 ================= */
+function buildTypes() {
+  const box = $('typeGrid'); box.innerHTML = '';
+  APP.capsuleTypes.forEach((t, i) => {
+    const d = el('div', 'ty' + (S.selType === i ? ' sel' : ''),
+      `<div class="ti">${t.icon}</div><div class="tn">${S.lang==='zh'?t.name:t.en}</div>`);
+    d.onclick = () => { S.selType = i; S.selSess = null; buildTypes(); buildSessions(); refreshCost(); };
+    box.appendChild(d);
+  });
+}
+function buildSessions() {
+  [0, 1].forEach(day => {
+    const box = $('sess' + day); box.innerHTML = '';
+    APP.sessions.forEach((ss, si) => {
+      const d = el('div', 'se' + (S.selDay === day && S.selSess === si ? ' sel' : ''),
+        ss + (ss === APP.points.primeSession ? '<span class="hot">HOT</span>' : ''));
+      d.onclick = () => { S.selDay = day; S.selSess = si; buildSessions(); refreshCost(); };
+      box.appendChild(d);
+    });
+  });
+}
+function refreshCost() {
+  $('ptsNow').textContent = S.points;
+  $('freeLeft').textContent = Math.max(0, APP.points.freeCount - S.usedThisMonth);
+  const btn = $('summonBtn');
+  const ready = S.selType != null && S.selSess != null;
+  btn.disabled = !ready;
+  if (!ready) return;
+  let cost = 0;
+  if (S.usedThisMonth >= APP.points.freeCount) {
+    cost = APP.points.costAfter;
+    if (APP.sessions[S.selSess] === APP.points.primeSession) cost += APP.points.primeSurcharge;
+  }
+  $('costEst').textContent = cost === 0 ? T('freeTag') : '−' + cost + ' pt';
+}
+
+$('summonBtn').onclick = () => {
+  const typeName = APP.capsuleTypes[S.selType].name;
+  const sess = APP.sessions[S.selSess];
+  // 成本核算
+  let cost = 0;
+  if (S.usedThisMonth >= APP.points.freeCount) {
+    cost = APP.points.costAfter + (sess === APP.points.primeSession ? APP.points.primeSurcharge : 0);
+  }
+  if (cost > S.points) { showPointsFail(cost); return; }
+
+  // 冲突检测：种子随机模拟本层该时段 25% 被占
+  const conflict = rnd() < 0.25;
+  let floor = S.myCap.floor;
+  let note = '';
+  if (conflict) {
+    floor = S.myCap.floor + (rnd() < .5 ? -1 : 1);
+    if (floor < 3) floor = 4;
+    note = T('adjusted');
+  }
+  // 扣分
+  S.points -= cost;
+  S.usedThisMonth++;
+
+  playAnime(T('dispatching') + (note ? ' · ' + note : ''), [
+    { ic: '📦', txt: T('stepB1') },
+    { ic: '🛗', txt: T('stepLift') },
+    { ic: '🏗️', txt: T('stepBeam') },
+    { ic: '🔒', txt: T('stepIn') },
+  ], 5200, () => {
+    S.lastSummon = { typeName, day: S.selDay, sess, floor };
+    S.selType = null; S.selSess = null;
+    buildTypes(); buildSessions(); refreshCost();
+    $('myPts').textContent = S.points;
+    showReady(typeName, sess, floor);
+  });
+};
+
+function showPointsFail(cost) {
+  const body = $('modalBody'); body.innerHTML = '';
+  body.appendChild(el('div', 'done-ic', '⚠️'));
+  body.appendChild(el('div', 'done-t', T('notEnough')));
+  body.appendChild(el('div', 'done-s', S.lang==='zh' ? `需 ${cost} 分，当前仅剩 ${S.points} 分` : `Need ${cost} pts, only ${S.points} left`));
+  const card = el('div', 'cost-card', T('ruleCard'));
+  card.style.marginTop = '14px';
+  body.appendChild(card);
+  const ok = el('button', 'btn', T('close'));
+  ok.onclick = () => $('overlay').classList.remove('show');
+  body.appendChild(ok);
+  $('overlay').classList.add('show');
+}
+
+function showReady(typeName, sess, floor) {
+  const body = $('modalBody'); body.innerHTML = '';
+  body.appendChild(el('div', 'done-ic', '🎉'));
+  body.appendChild(el('div', 'done-t', T('ready')));
+  body.appendChild(el('div', 'done-s', `${typeName} · ${floor}F · ${sess}`));
+  body.appendChild(el('div', 'qr-mock', T('scan')));
+  const ok = el('button', 'btn', T('close'));
+  ok.onclick = () => $('overlay').classList.remove('show');
+  body.appendChild(ok);
+  $('overlay').classList.add('show');
+}
+
+/* ================= 调舱动画 ================= */
+function playAnime(title, steps, dur, onDone) {
+  $('animeTitle').textContent = title;
+  const sv = $('gantrySvg');
+  sv.innerHTML = `
+    <g stroke="#3A352E" stroke-width="2" fill="none">
+      <line x1="40" y1="150" x2="260" y2="150"/>
+      <line x1="55" y1="20" x2="55" y2="150" stroke-width="5"/>
+      <line x1="245" y1="20" x2="245" y2="150" stroke-width="5"/>
+      <line x1="40" y1="20" x2="260" y2="20" stroke-width="4" stroke="#1F5C4D"/>
+    </g>
+    <g id="beamArm">
+      <line x1="150" y1="20" x2="150" y2="42" stroke="#A6462E" stroke-width="3"/>
+      <rect id="capBox" x="136" y="42" width="28" height="22" rx="3" fill="#D9B48A" stroke="#3A352E" stroke-width="1.5"/>
+    </g>
+    <g fill="#8A8378" font-size="8" font-family="sans-serif">
+      <text x="48" y="163">立柱</text><text x="238" y="163">立柱</text>
+      <text x="128" y="163">B1 → 目标层</text>
+    </g>`;
+  const stBox = $('animeSteps'); stBox.innerHTML = '';
+  const stepEls = steps.map(s => {
+    const d = el('div', 'step', `<div class="dot">${s.ic}</div><div class="st">${s.txt}</div>`);
+    stBox.appendChild(d); return d;
+  });
+  $('animeClose').style.display = 'none';
+  $('anime').classList.add('show');
+
+  // 动画：横梁 + 舱体从左到右移动（代表 B1→立柱→横梁→入位）
+  const arm = sv.querySelector('#beamArm');
+  const box = sv.querySelector('#capBox');
+  const t0 = performance.now();
+  let stepIdx = -1;
+  function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    // 横梁高度先降后升（模拟经立柱井上升）
+    const beamY = 20 + Math.sin(t * Math.PI) * 40;
+    arm.setAttribute('transform', `translate(${(t * 90 - 45).toFixed(1)}, ${(beamY - 20).toFixed(1)})`);
+    // 舱体轻微摆动
+    box.setAttribute('transform', `rotate(${Math.sin(t * 20) * 2} 150 42)`);
+    // 步骤点亮
+    const si = Math.min(steps.length - 1, Math.floor(t * steps.length));
+    if (si !== stepIdx) { stepIdx = si; stepEls.forEach((e, i) => e.classList.toggle('on', i <= si)); }
+    if (t < 1) requestAnimationFrame(frame);
+    else {
+      stepEls.forEach(e => e.classList.add('on'));
+      $('animeClose').style.display = 'block';
+      $('animeClose').onclick = () => { $('anime').classList.remove('show'); if (onDone) onDone(); };
+      $('animeClose').onclick = () => { $('anime').classList.remove('show'); if (onDone) onDone(); };
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ================= 页4 · 数据看板 ================= */
+// 热力：16 层 × 6 时段，模式化数据（健身晚高/图馆午后高/排练周末高）
+function buildHeat() {
+  const tbl = $('heatTbl'); tbl.innerHTML = '';
+  const xs = ['08', '10', '12', '14', '16', '18', '20', '22'];
+  // 6 时段列
+  const slots = ['早读', '上午', '午间', '下午', '晚间', '深夜'];
+  const slotsEN = ['AM', 'Noon', 'PM', 'Eve', 'Night', 'Late'];
+  // 表头
+  tbl.appendChild(el('div', 'hl', ''));
+  for (let c = 0; c < 6; c++) tbl.appendChild(el('div', 'heat-x', S.lang==='zh'?slots[c]:slotsEN[c]));
+  for (let f = 18; f >= 3; f--) {
+    tbl.appendChild(el('div', 'hl', f + 'F'));
+    for (let c = 0; c < 6; c++) {
+      let v = rnd() * .3;
+      if ((f === 5 || f === 11 || f === 16) && c >= 4) v += .6;          // 健身晚间高
+      if ((f === 4 || f === 8 || f === 13) && (c === 2 || c === 3)) v += .55; // 图书馆午后高
+      if ((f === 7 || f === 15) && (c === 5)) v += .5;                     // 排练深夜高
+      if (CONFIG.programFixed.includes('F' + f)) v = 0;                   // 大客厅无预约
+      v = Math.min(1, v);
+      const d = el('div', 'heat-cell');
+      // 色阶：纸色 → 主绿
+      const a = v;
+      d.style.background = `rgba(31,92,77,${(a * .9).toFixed(2)})`;
+      tbl.appendChild(d);
+    }
+  }
+}
+function buildRank() {
+  const box = $('rankBox'); box.innerHTML = '';
+  const tops = [
+    { zh: '琴房', en: 'Piano Room', n: 128 },
+    { zh: '厨房', en: 'Kitchen', n: 96 },
+    { zh: '游戏舱', en: 'Gaming', n: 74 },
+  ];
+  tops.forEach((t, i) => {
+    box.appendChild(el('div', 'rank-row',
+      `<div class="rank-no${i===1?' n2':i===2?' n3':''}">${i+1}</div><div class="rank-name">${S.lang==='zh'?t.zh:t.en}</div><div class="rank-val">${t.n} 次</div>`));
+  });
+}
+
+/* ================= 渲染总入口 ================= */
+function renderAll() {
+  buildTower();
+  buildVote(); refreshQuota();
+  buildTypes(); buildSessions(); refreshCost();
+  buildHeat(); buildRank();
+  $('myCapId').textContent = S.myCap.id;
+  $('myFacing').textContent = S.myCap.row === 'S' ? T('facingS') : T('facingN');
+  $('myPts').textContent = S.points;
+}
+
+/* ================= 启动 ================= */
+const hash = location.hash.replace('#', '');
+switchTab(['home', 'vote', 'summon', 'data'].includes(hash) ? hash : 'home');
+applyLang();
+
+/* ---- 演示/调试钩子：?demo=vote|summon|move|result 自动走完流程（截图验收用）---- */
+const demo = new URLSearchParams(location.search).get('demo');
+setTimeout(() => {
+  if (demo === 'vote') {
+    // 合法选票：健身 5/11/16，图书馆 4/8/13，排练 7/15（出厂值）
+    S.vote = { F5:'gym', F11:'gym', F16:'gym', F4:'lib', F8:'lib', F13:'lib', F7:'reh', F15:'reh' };
+    buildVote(); refreshQuota();
+    $('voteSubmit').click();
+  } else if (demo === 'result') {
+    S.vote = { F5:'gym', F11:'gym', F16:'gym', F4:'lib', F8:'lib', F13:'lib', F7:'reh', F15:'reh' };
+    buildVote(); refreshQuota(); $('voteSubmit').click(); $('resultBtn').click();
+  } else if (demo === 'summon') {
+    S.selType = 0; S.selDay = 0; S.selSess = 1; // 琴房 · 今天 19:00（热门）
+    buildTypes(); buildSessions(); refreshCost();
+  } else if (demo === 'summonGo') {
+    S.selType = 0; S.selDay = 0; S.selSess = 1;
+    buildTypes(); buildSessions(); refreshCost();
+    $('summonBtn').click();
+  } else if (demo === 'move' || demo === 'hall') {
+    $('hallBtn').click();
+  } else if (demo === 'hallAgree') {
+    $('hallBtn').click();
+    setTimeout(() => agreeToOffer(EX_OFFERS[1]), 500);
+  } else if (demo === 'hallPublish') {
+    $('hallBtn').click();
+    setTimeout(() => publishRequest(), 500);
+  } else if (demo === 'points') {
+    S.usedThisMonth = 3; S.points = 5; // 制造积分不足
+    S.selType = 2; S.selDay = 1; S.selSess = 1;
+    buildTypes(); buildSessions(); refreshCost();
+    $('summonBtn').click();
+  }
+}, 300);
+window.addEventListener('hashchange', () => {
+  const h = location.hash.replace('#', '');
+  if (['home', 'vote', 'summon', 'data'].includes(h) && h !== S.tab) switchTab(h);
+});
+</script>
+</body>
+</html>
