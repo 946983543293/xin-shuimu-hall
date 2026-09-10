@@ -10,6 +10,7 @@ import { initDemo, PRESETS } from './interaction.js';
 import { initHotspots } from './hotspots.js';
 import { initGuide } from './guide.js';
 import { initP2 } from './p2.js';
+import { initEasterEgg } from './easteregg.js';
 
 const app = document.getElementById('app');
 
@@ -76,6 +77,7 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.1);
   if (ctx.demo) ctx.demo.update(dt);
   if (ctx.p2) ctx.p2.update(dt);
+  if (ctx.egg) ctx.egg.update(dt);
   controls.update();
   render();
 }
@@ -86,6 +88,7 @@ ctx.applyTheme = (name) => applyTheme(name, { scene, mats, hemi, sun, ground: bu
 ctx.applyTheme('light');
 ctx.demo = initDemo(ctx);
 const ui = initUI(ctx);
+ctx.ui = ui;
 const hotspots = initHotspots(ctx);
 ctx.hotspots = hotspots;
 ctx.guide = initGuide(ctx);
@@ -138,6 +141,12 @@ ctx.p2 = initP2(ctx);
 // ---------- URL 参数（便于测试与截图机位）：?theme=night&floors=F9,F10&glass=0.2&lang=en ----------
 {
   const p = new URLSearchParams(location.search);
+  if (p.get('clean') === '1') {
+    // 纯净模式：隐藏所有 UI（截图/图生图底图用）
+    const st = document.createElement('style');
+    st.textContent = '.hud,#panel,#panel-toggle,#data-panel,#hotspot-layer,.btn-row,button{display:none!important}';
+    document.head.appendChild(st);
+  }
   if (p.get('theme')) ui.setTheme(p.get('theme'));
   if (p.get('glass')) ui.setGlass(parseFloat(p.get('glass')));
   if (p.get('floors')) {
@@ -174,6 +183,9 @@ ctx.p2 = initP2(ctx);
   }
   if (p.get('data') === '1') ctx.p2.showData();
 }
+
+// 隐藏彩蛋（无界面提示）：连续点击中英文切换按钮 11 次触发
+ctx.egg = initEasterEgg(ctx);
 
 animate();
 
