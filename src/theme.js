@@ -28,7 +28,7 @@ export function createMaterials() {
     windowLit: new THREE.MeshBasicMaterial({ color: 0xffc978 }),
     lampGlow: new THREE.MeshBasicMaterial({ color: 0xffe2b0 }),
     lampPool: new THREE.MeshBasicMaterial({
-      color: 0xffd9a0, transparent: true, opacity: 0.24,
+      color: 0xffd9a0, transparent: true, opacity: 0.34,
       blending: THREE.AdditiveBlending, depthWrite: false,
     }),
   };
@@ -56,7 +56,7 @@ export function applyTheme(name, env) {
   const { scene, mats, hemi, sun, ground, grid, sky, built } = env;
   const night = name === 'night';
   scene.background = new THREE.Color(night ? C.night : C.paper);
-  scene.fog = night ? new THREE.Fog(C.night, 260, 520) : new THREE.Fog(C.paper, 340, 700);
+  scene.fog = night ? new THREE.Fog(C.night, 330, 700) : new THREE.Fog(C.paper, 340, 700);
 
   // 天空穹顶纹理切换（昼：太阳+云 / 夜：星空+月）
   if (sky) sky.material.map = night ? sky.userData.night : sky.userData.day;
@@ -67,26 +67,26 @@ export function applyTheme(name, env) {
     (built.site.userData.night || []).forEach((m) => (m.visible = night));
   }
 
-  mats.solid.color.set(night ? 0x7e8da1 : 0xffffff);
-  mats.capsule.color.set(night ? 0x8f9dac : 0xffffff);
-  mats.facade.color.set(night ? 0x8f9dac : 0xffffff);
+  mats.solid.color.set(night ? 0xa9bacd : 0xffffff);
+  mats.capsule.color.set(night ? 0xa6b3c1 : 0xffffff);
+  mats.facade.color.set(night ? 0xa6b3c1 : 0xffffff);
   // 夜航：舱体透出暖窗光（整体提亮）
-  mats.capsule.emissive = new THREE.Color(night ? 0x3a2412 : 0x000000);
-  mats.facade.emissive = new THREE.Color(night ? 0x452c14 : 0x000000);
-  mats.solid.emissive = new THREE.Color(night ? 0x0e1824 : 0x000000);
-  mats.glass.color.set(night ? C.nightEdge : 0xbfd9e8);
-  mats.glass.emissive = new THREE.Color(night ? 0x0d2a24 : 0x000000);
+  mats.capsule.emissive = new THREE.Color(night ? 0x5a3a1c : 0x000000);
+  mats.facade.emissive = new THREE.Color(night ? 0x67431f : 0x000000);
+  mats.solid.emissive = new THREE.Color(night ? 0x1b2836 : 0x000000);
+  mats.glass.color.set(night ? 0x9fe4d2 : 0xbfd9e8);
+  mats.glass.emissive = new THREE.Color(night ? 0x14413a : 0x000000);
   mats.edge.color.set(night ? C.nightEdge : C.ink);
-  mats.mech.color.set(night ? 0xd96a4a : C.accentRust);
+  mats.mech.color.set(night ? 0xe07a56 : C.accentRust);
 
-  hemi.color.set(night ? 0x51698a : 0xfff8ec);
-  hemi.groundColor.set(night ? 0x1f2a36 : 0xd8d2c4);
-  hemi.intensity = night ? 2.0 : 1.1;
-  sun.color.set(night ? 0xc3dcef : 0xfff2df);
-  sun.intensity = night ? 1.45 : 1.6;
+  hemi.color.set(night ? 0x7692b8 : 0xfff8ec);
+  hemi.groundColor.set(night ? 0x2e3d4c : 0xd8d2c4);
+  hemi.intensity = night ? 2.7 : 1.1;
+  sun.color.set(night ? 0xd2e6f7 : 0xfff2df);
+  sun.intensity = night ? 1.8 : 1.6;
 
-  ground.material.color.set(night ? 0x1e262f : 0xe9eae0);
-  grid.material.color.set(night ? 0x3d4e61 : 0xcfc8ba);
+  ground.material.color.set(night ? 0x33404d : 0xe9eae0);
+  grid.material.color.set(night ? 0x5c7691 : 0xcfc8ba);
 
   document.body.classList.toggle('night', night);
 }
