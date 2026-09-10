@@ -11,6 +11,8 @@ import { initHotspots } from './hotspots.js';
 import { initGuide } from './guide.js';
 import { initP2 } from './p2.js';
 import { initEasterEgg } from './easteregg.js';
+import { initCrowd } from './crowd.js';
+import { initGuardEgg } from './guardEgg.js';
 
 const app = document.getElementById('app');
 
@@ -78,6 +80,8 @@ function animate() {
   if (ctx.demo) ctx.demo.update(dt);
   if (ctx.p2) ctx.p2.update(dt);
   if (ctx.egg) ctx.egg.update(dt);
+  if (ctx.crowd) ctx.crowd.update(dt);
+  if (ctx.guardEgg) ctx.guardEgg.update(dt);
   controls.update();
   render();
 }
@@ -183,6 +187,12 @@ ctx.p2 = initP2(ctx);
   }
   if (p.get('data') === '1') ctx.p2.showData();
 }
+
+// 校园人群（白天多 / 夜晚少；只在有地面且非楼层导引时出现）
+ctx.crowd = initCrowd(ctx);
+
+// 样板舱小彩蛋（点击样板舱触发）
+ctx.guardEgg = initGuardEgg(ctx);
 
 // 隐藏彩蛋（无界面提示）：连续点击中英文切换按钮 11 次触发
 ctx.egg = initEasterEgg(ctx);

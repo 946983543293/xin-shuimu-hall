@@ -158,7 +158,7 @@ export function buildBuilding(scene, mats) {
     ]), mats.corridorLight);
     strip.visible = false;
     g.add(strip); nightMeshes.push(strip);
-    const litCaps = caps.filter((cp, k) => (k * 13 + f * 7) % 5 < 2);
+    const litCaps = caps.filter((cp, k) => (k * 13 + f * 7) % 5 < 3);
     const litMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1.7, 1.1), mats.windowLit, litCaps.length);
     litCaps.forEach((cp, j) => {
       const qf = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), cp.row === 'N' ? Math.PI : 0);
@@ -467,29 +467,87 @@ function buildSite(scene, mats) {
   site.add(new THREE.Mesh(mergeGeos(trunks), mats.solid));
   site.add(new THREE.Mesh(mergeGeos(canopies), mats.solid));
 
-  // 南主路路灯
+  // 路灯：南主路 / 北路 / 西路 / 楼前广场环（[x, z, 灯臂方向x, 灯臂方向z]）
+  const lampPts = [];
+  for (let x = -144; x <= 144; x += 24) lampPts.push([x, 31.5, 0, 1]);
+  for (let x = -144; x <= 144; x += 30) lampPts.push([x, -27.5, 0, -1]);
+  for (let z = -84; z <= 84; z += 28) lampPts.push([-71.5, z, -1, 0]);
+  for (const x of [-56, -28, 0, 28, 56]) {
+    lampPts.push([x, -17.5, 0, -1]);
+    lampPts.push([x, 17.5, 0, 1]);
+  }
   const lamps = [];
-  const lampX = [];
-  for (let x = -144; x <= 144; x += 24) {
+  for (const [px, pz, ax, az] of lampPts) {
     const pole = new THREE.CylinderGeometry(0.09, 0.12, 6, 5);
-    pole.translate(x, 3, 31.5);
+    pole.translate(px, 3, pz);
     lamps.push({ geo: pole, color: '#7A7468' });
-    lamps.push({ geo: new THREE.BoxGeometry(1.6, 0.14, 0.4).translate(x + 0.6, 6, 31.5), color: '#7A7468' });
-    lampX.push(x);
+    const arm = new THREE.BoxGeometry(1.6, 0.14, 0.4);
+    if (Math.abs(az) > 0.5) arm.rotateY(Math.PI / 2);
+    arm.translate(px + ax * 0.8, 6, pz + az * 0.8);
+    lamps.push({ geo: arm, color: '#7A7468' });
   }
   site.add(new THREE.Mesh(mergeGeos(lamps), mats.solid));
 
   // 夜航：路灯光球 + 地面光晕（默认隐藏）
   const headGeos = [], poolGeos = [];
-  for (const x of lampX) {
-    headGeos.push({ geo: new THREE.SphereGeometry(0.38, 8, 6).translate(x + 0.9, 5.9, 31.5), color: '#FFE2B0' });
-    poolGeos.push({ geo: new THREE.CircleGeometry(3.4, 16).rotateX(-Math.PI / 2).translate(x + 0.9, 0.05, 31.5), color: '#FFD9A0' });
+  for (const [px, pz, ax, az] of lampPts) {
+    headGeos.push({ geo: new THREE.SphereGeometry(0.42, 8, 6).translate(px + ax * 1.15, 5.85, pz + az * 1.15), color: '#FFE2B0' });
+    poolGeos.push({ geo: new THREE.CircleGeometry(4.6, 18).rotateX(-Math.PI / 2).translate(px + ax * 1.15, 0.05, pz + az * 1.15), color: '#FFD9A0' });
   }
   const lampHeads = new THREE.Mesh(mergeGeos(headGeos), mats.lampGlow);
   const lampPools = new THREE.Mesh(mergeGeos(poolGeos), mats.lampPool);
   lampHeads.visible = false; lampPools.visible = false;
   site.add(lampHeads, lampPools);
-  site.userData.night = [lampHeads, lampPools];
+
+  // 夜航：周边建筑亮窗（默认隐藏；用独立随机序列，避免扰动树木布局）
+  const winPts = [];
+  {
+    let ws = 913;
+    const wr = () => (ws = (ws * 16807) % 2147483647) / 2147483647;
+    for (const [x, z, w, d, h] of NB) {
+      const faces = [
+        [0, w, z + d / 2 + 0.08, 0],
+        [0, w, z - d / 2 - 0.08, Math.PI],
+        [1, d, x + w / 2 + 0.08, Math.PI / 2, x],
+        [-1, d, x - w / 2 - 0.08, -Math.PI / 2, x],
+      ];
+      for (const face of faces) {
+        const normal = face[0], span = face[1], off = face[2], rot = face[3];
+        const cols = Math.max(1, Math.floor(span / 3.6));
+        const rows = Math.max(1, Math.floor((h - 3.2) / 3.6));
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            if (wr() > 0.36) continue;
+            const t = (c + 0.5) / cols - 0.5;
+            const y = 2.6 + (r + 0.5) * 3.6;
+            if (normal === 0) winPts.push({ x: x + t * span, y, z: off, rot });
+            else winPts.push({ x: off, y, z: z + t * span, rot });
+          }
+        }
+      }
+    }
+  }
+  const winMesh = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(1.8, 1.9),
+    new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    Math.max(1, winPts.length)
+  );
+  {
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(),
+          s = new THREE.Vector3(1, 1, 1), axis = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
+    const pal = [0xffc978, 0xffdca6, 0xffe8c4, 0xf7c96b, 0xdfe9f5];
+    winPts.forEach((wd, i) => {
+      q.setFromAxisAngle(axis, wd.rot);
+      m4.compose(v.set(wd.x, wd.y, wd.z), q, s);
+      winMesh.setMatrixAt(i, m4);
+      winMesh.setColorAt(i, c.set(pal[(i * 7) % pal.length]));
+    });
+    winMesh.instanceMatrix.needsUpdate = true;
+  }
+  winMesh.visible = false;
+  site.add(winMesh);
+
+  site.userData.night = [lampHeads, lampPools, winMesh];
 
   scene.add(site);
   return site;
